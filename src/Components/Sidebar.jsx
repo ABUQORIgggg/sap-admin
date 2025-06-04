@@ -21,7 +21,7 @@ const Sidebar = () => {
       title: "Административная Панель",
       links: [
         {
-          name: "Панель",
+          name: "Панельnn",
           route: "", // English route path
           icon: <FiShoppingBag />,
         },
