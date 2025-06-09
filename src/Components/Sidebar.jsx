@@ -21,29 +21,30 @@ const Sidebar = () => {
       title: "Административная Панель",
       links: [
         {
-          name: "Панельnn",
+          name: "Панель",
           route: "", // English route path
           icon: <FiShoppingBag />,
         },
       ],
     },
-    {
-      title: "Заказы",
-      links: [
-        {
-          name: "Заказы",
-          route: "orders", // English route path
-          icon: <FiShoppingBag />,
-        },
-      ],
-    },
+    // {
+    //   title: "Заказы",
+    //   links: [
+    //     {
+    //       name: "Заказы",
+    //       route: "orders", // English route path
+    //       icon: <FiShoppingBag />,
+    //     },
+    //   ],
+    // },
     {
       title: "Пользователи",
       links: [
         {
-          name: "Все-пользователи",
+          name: "Users",
           route: "all-users", // English route path
           icon: <IoMdContacts />,
+          
         },
         // Uncomment and update if needed
         // {
@@ -58,51 +59,51 @@ const Sidebar = () => {
         // },
       ],
     },
-    {
-      title: "Продукты",
-      links: [
-        {
-          name: "Панель-продуктов",
-          route: "products-dashboard", // English route path
-          icon: <AiOutlineCalendar />,
-        },
-        {
-          name: "Создать-продукт",
-          route: "create-products", // English route path
-          icon: <BsKanban />,
-        },
-      ],
-    },
-    {
-      title: "Инвентаризация",
-      links: [
-        {
-          name: "Приход",
-          route: "stock", // English route path (you may need to add this route in index.jsx)
-          icon: <MdOutlineInventory />,
-        },
-        {
-          name: "Добавить Приход",
-          route: "add-invoice", // English route path (you may need to add this route in index.jsx)
-          icon: <MdAddBusiness />,
-        },
-      ],
-    },
-    {
-      title: "Каталог",
-      links: [
-        {
-          name: "Создать категорию",
-          route: "create-catalogs", // English route path (you may need to add this route in index.jsx)
-          icon: <IoIosAddCircleOutline />,
-        },
-        {
-          name: "Каталог",
-          route: "categories", // English route path (you may need to add this route in index.jsx)
-          icon: <BiCategory />,
-        },
-      ],
-    },
+    // {
+    //   title: "Продукты",
+    //   links: [
+    //     {
+    //       name: "Панель-продуктов",
+    //       route: "products-dashboard", // English route path
+    //       icon: <AiOutlineCalendar />,
+    //     },
+    //     {
+    //       name: "Создать-продукт",
+    //       route: "create-products", // English route path
+    //       icon: <BsKanban />,
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "Инвентаризация",
+    //   links: [
+    //     {
+    //       name: "Приход",
+    //       route: "stock", // English route path (you may need to add this route in index.jsx)
+    //       icon: <MdOutlineInventory />,
+    //     },
+    //     {
+    //       name: "Добавить Приход",
+    //       route: "add-invoice", // English route path (you may need to add this route in index.jsx)
+    //       icon: <MdAddBusiness />,
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "Каталог",
+    //   links: [
+    //     {
+    //       name: "Создать категорию",
+    //       route: "create-catalogs", // English route path (you may need to add this route in index.jsx)
+    //       icon: <IoIosAddCircleOutline />,
+    //     },
+    //     {
+    //       name: "Каталог",
+    //       route: "categories", // English route path (you may need to add this route in index.jsx)
+    //       icon: <BiCategory />,
+    //     },
+    //   ],
+    // },
   ];
 
   const handleCloseSidebar = () => {
