@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { login } from "../../store/slices/AuthSlice";
-import useFetch from "../../hooks/useFetch";
 import { motion } from "framer-motion";
 import loginImage from "../../images/login-image.avif";
 
@@ -13,46 +12,54 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { loading, postData } = useFetch(
-    `${process.env.REACT_APP_API_URL}/api/v1/auth/login`,
-    {},
-    false
-  );
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
+    toast.info("Попытка входа...");
+  
     try {
-      const response = await postData(
-        `${process.env.REACT_APP_API_URL}/api/v1/auth/login`,
-        { username, password }
-      );
-
-      if (response?.token) {
+      const response = await fetch("http://37.140.216.178/api/v1/admin/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ login: username, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok && data?.access_token) {
         const userData = {
-          id: response.id,
-          username: response.username,
-          token: response.token,
+          id: data.id || null,
+          username: username,
+          token: data.access_token,
+          refresh: data.refresh_token,
         };
-
+  
         dispatch(login(userData));
+  
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        localStorage.setItem("username", username);
+  
         toast.success("Вход выполнен успешно!");
-
-        localStorage.setItem("token", response.token);
-        localStorage.setItem("id", response.id);
-        localStorage.setItem("username", response.username);
-
-        navigate("/dashboard");
+        navigate("/all-users", { replace: true });
       } else {
-        const errorMessage = response?.message || "Не удалось войти";
-        toast.error(errorMessage);
-        console.log("Ответ при входе:", response);
+        const errorMsg = data?.message || "Неверные данные для входа.";
+        toast.error(errorMsg);
+        console.log("Login error response:", data);
       }
     } catch (err) {
-      console.error("Ошибка входа:", err);
-      toast.error("Произошла ошибка при входе.");
+      console.error("Login error:", err);
+      toast.error("Ошибка при подключении к серверу.");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -93,7 +100,6 @@ const Login = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Form Section */}
         <motion.div
           className="w-full md:w-1/2 p-8 flex flex-col justify-center"
           variants={sideVariants}
@@ -176,7 +182,7 @@ const Login = () => {
           <img
             className="w-full h-full object-cover"
             src={loginImage}
-            alt="Вход Zaporka"
+            alt="Вход"
           />
         </motion.div>
       </motion.div>
