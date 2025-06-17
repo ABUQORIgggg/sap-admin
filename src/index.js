@@ -3,10 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./store/store";
 import "./index.css";
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ContextProvider } from "./Contexts/ContextProvider";
 import App from "./App";
 import Dashboard from "./Pages/Dashboard/Dashboard";
@@ -28,30 +25,26 @@ import CategoryDashboard from "./Pages/Categories/CategoryDashboard/CategoryDash
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <ProtectedRoute><App /></ProtectedRoute>,
+    element: (
+        <App />
+    ),
     children: [
       {
         path: "/",
         element: (
-          <ProtectedRoute>
             <Dashboard />
-          </ProtectedRoute>
         ),
       },
       {
         path: "orders",
         element: (
-          <ProtectedRoute>
             <Orders />
-          </ProtectedRoute>
         ),
       },
       {
         path: "create-products",
         element: (
-          <ProtectedRoute>
             <CreateProduct />
-          </ProtectedRoute>
         ),
       },
       {
@@ -98,7 +91,7 @@ const router = createBrowserRouter([
         path: "stock",
         element: (
           <ProtectedRoute>
-            <Inventory/>
+            <Inventory />
           </ProtectedRoute>
         ),
       },
@@ -106,7 +99,7 @@ const router = createBrowserRouter([
         path: "create-catalogs",
         element: (
           <ProtectedRoute>
-            <CreateCategory/>
+            <CreateCategory />
           </ProtectedRoute>
         ),
       },
@@ -114,7 +107,7 @@ const router = createBrowserRouter([
         path: "categories",
         element: (
           <ProtectedRoute>
-            <CategoryDashboard/>
+            <CategoryDashboard />
           </ProtectedRoute>
         ),
       },
@@ -122,10 +115,10 @@ const router = createBrowserRouter([
         path: "add-invoice",
         element: (
           <ProtectedRoute>
-            <AddInvoice/>
+            <AddInvoice />
           </ProtectedRoute>
         ),
-      }
+      },
     ],
   },
   {
