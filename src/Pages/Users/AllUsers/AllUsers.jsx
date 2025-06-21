@@ -94,7 +94,6 @@ const AllUsers = () => {
     setGradesError(null);
 
     try {
-      // Fetch faculties
       const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
         method: "GET",
       });
@@ -113,7 +112,6 @@ const AllUsers = () => {
     }
 
     try {
-      // Fetch grades
       const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
         method: "GET",
       });
@@ -135,6 +133,56 @@ const AllUsers = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      setFacultiesLoading(true);
+      setFacultiesError(null);
+      try {
+        const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
+          method: "GET",
+        });
+        const facultiesArray = Array.isArray(facultiesResult.results)
+          ? facultiesResult.results
+          : Array.isArray(facultiesResult)
+          ? facultiesResult
+          : [];
+        console.log("Fetched Faculties:", facultiesArray);
+        setFaculties(facultiesArray);
+      } catch (err) {
+        setFacultiesError(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+        toast.error(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+      } finally {
+        setFacultiesLoading(false);
+      }
+    };
+    fetchFaculties();
+  }, []);
+
+  useEffect(() => {
+    const fetchGrades = async () => {
+      setGradesLoading(true);
+      setGradesError(null);
+      try {
+        const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
+          method: "GET",
+        });
+        const gradesArray = Array.isArray(gradesResult.results)
+          ? gradesResult.results
+          : Array.isArray(gradesResult)
+          ? gradesResult
+          : [];
+        console.log("Fetched Grades:", gradesArray);
+        setGrades(gradesArray);
+      } catch (err) {
+        setGradesError(`Kurslarni yuklashda xatolik: ${err.message}`);
+        toast.error(`Kurslarni yuklashda xatolik: ${err.message}`);
+      } finally {
+        setGradesLoading(false);
+      }
+    };
+    fetchGrades();
+  }, []);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -164,11 +212,12 @@ const AllUsers = () => {
       newName: user.name || "",
       newSurname: user.surname || "",
       newUniversityId: user.university_id || "",
-      newEmail: "",
-      newPassword: "",
-      newFaculty: "",
+      newEmail: user.email || "",
+      newPassword: "", // Password not pre-filled for security
+      newFaculty: user.faculty || "",
       newGrade: "",
     }));
+    fetchFacultiesAndGrades();
   };
 
   const closeModal = () => {
@@ -379,7 +428,7 @@ const AllUsers = () => {
       {
         label: "O‘chirish",
         icon: <FiTrash2 className="w-4 h-4" />,
-        onClick: (row) => handleDeleteUser(row.id),
+        onChange: (row) => handleDeleteUser(row.id),
         className: "btn btn-ghost btn-sm text-error",
       },
     ],
@@ -458,7 +507,7 @@ const AllUsers = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="btn btn-square btn-primary">
+            <span className="btn btn-primary">
               <FiSearch className="w-5 h-5" />
             </span>
           </div>
@@ -566,7 +615,7 @@ const AllUsers = () => {
                   <span className="label-text">Parol {modalState.isEditOpen && "(ixtiyoriy)"}</span>
                 </label>
                 <input
-                  type="password"
+                  type={modalState.isEditOpen ? "text" : "password"} // Show password in edit mode
                   placeholder={modalState.isEditOpen ? "Yangi parol (ixtiyoriy)" : "Parol kiriting"}
                   className="input input-bordered w-full"
                   value={modalState.newPassword}
@@ -577,30 +626,20 @@ const AllUsers = () => {
                 <label className="label">
                   <span className="label-text">Fakultet</span>
                 </label>
-                {modalState.isAddOpen ? (
-                  <select
-                    className="select select-bordered w-full"
-                    value={modalState.newFaculty}
-                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
-                    disabled={facultiesLoading || !!facultiesError}
-                  >
-                    <option value="">Fakultetni tanlang</option>
-                    {faculties.map((faculty) => (
-                      <option key={faculty.id} value={faculty.id}>
-                        {faculty.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="number"
-                    placeholder="Fakultet raqami kiriting"
-                    className="input input-bordered w-full"
-                    value={modalState.newFaculty}
-                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
-                  />
-                )}
-                {facultiesError && modalState.isAddOpen && (
+                <select
+                  className="select select-bordered w-full"
+                  value={modalState.newFaculty}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
+                  disabled={facultiesLoading || !!facultiesError}
+                >
+                  <option value="">Fakultetni tanlang</option>
+                  {faculties.map((faculty) => (
+                    <option key={faculty.id} value={faculty.id}>
+                      {faculty.faculty_name}
+                    </option>
+                  ))}
+                </select>
+                {facultiesError && (modalState.isAddOpen || modalState.isEditOpen) && (
                   <span className="text-error text-sm mt-1">{facultiesError}</span>
                 )}
               </div>
@@ -618,7 +657,7 @@ const AllUsers = () => {
                     <option value="">Kursni tanlang</option>
                     {grades.map((grade) => (
                       <option key={grade.id} value={grade.id}>
-                        {grade.name}
+                        {grade.grade_name}
                       </option>
                     ))}
                   </select>
