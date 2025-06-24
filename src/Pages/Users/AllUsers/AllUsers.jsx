@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { FiSearch, FiRefreshCcw, FiUsers, FiEdit, FiTrash2, FiUserPlus } from "react-icons/fi";
+import { FiSearch, FiRefreshCcw, FiUserPlus, FiEdit, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-toastify";
 import CustomPagination from "../../../Components/CustomPagination/CustomPagination";
 import CustomTable from "../../../Components/CustomTable/CustomTable";
@@ -9,14 +9,20 @@ import { useSelector } from "react-redux";
 
 const AllUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [usersPerPage, setUsersPerPage] = useState(10);
+  const [usersPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortedBy, setSortedBy] = useState(null);
   const [data, setData] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const token = useSelector((state) => state.auth.user.token)
+  const [faculties, setFaculties] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [facultiesLoading, setFacultiesLoading] = useState(false);
+  const [gradesLoading, setGradesLoading] = useState(false);
+  const [facultiesError, setFacultiesError] = useState(null);
+  const [gradesError, setGradesError] = useState(null);
+  const token = useSelector((state) => state.auth.user.token);
 
   const authHeaders = token
     ? {
@@ -26,24 +32,33 @@ const AllUsers = () => {
     : { "Content-Type": "application/json" };
 
   const [modalState, setModalState] = useState({
-    isEditOpen: false,
-    isDeleteOpen: false,
     isAddOpen: false,
-    selectedUser: null,
-    newUsername: "",
+    isEditOpen: false,
+    editUserId: null,
+    newName: "",
+    newSurname: "",
+    newUniversityId: "",
+    newEmail: "",
     newPassword: "",
+    newFaculty: "",
+    newGrade: "",
     isActionLoading: false,
   });
 
   const apiRequest = async (url, options) => {
     try {
+      console.log("Request URL:", url, "Token:", token);
       const response = await fetch(url, {
         ...options,
-        headers: authHeaders});
-      if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
-      return await response.json();
+        headers: authHeaders,
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Xatolik: ${response.status} - ${errorText || "Noma'lum xatolik"}`);
+      }
+      return response.status === 204 ? {} : await response.json();
     } catch (err) {
-      console.error(`Ошибка API-запроса (${url}):`, err);
+      console.error(`API so'rov xatosi (${url}):`, err);
       throw err;
     }
   };
@@ -52,12 +67,68 @@ const AllUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiRequest("https://zaporka-backend.onrender.com/api/v1/users", { method: "GET" });
-      setData(Array.isArray(result) ? result : []);
+      const endpoint = "http://37.140.216.178/api/v1/admin/userlist/";
+      const result = await apiRequest(endpoint, { method: "GET" });
+      console.log("API Response:", result);
+      const dataArray = Array.isArray(result.results) ? result.results : [];
+      console.log("Fetched Users:", dataArray);
+      setData(dataArray);
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.message.includes("404")
+          ? "Foydalanuvchilar ro'yxati topilmadi. Iltimos, API manzilini tekshiring."
+          : err.message.includes("401")
+          ? "Avtorizatsiya xatosi. Tokenni tekshiring."
+          : `Ma'lumotlarni yuklashda xatolik: ${err.message}`
+      );
+      setData([]);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchFacultiesAndGrades = useCallback(async () => {
+    setFacultiesLoading(true);
+    setGradesLoading(true);
+    setFacultiesError(null);
+    setGradesError(null);
+
+    try {
+      // Fetch faculties
+      const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
+        method: "GET",
+      });
+      const facultiesArray = Array.isArray(facultiesResult.results)
+        ? facultiesResult.results
+        : Array.isArray(facultiesResult)
+        ? facultiesResult
+        : [];
+      console.log("Fetched Faculties:", facultiesArray);
+      setFaculties(facultiesArray);
+    } catch (err) {
+      setFacultiesError(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+      toast.error(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+    } finally {
+      setFacultiesLoading(false);
+    }
+
+    try {
+      // Fetch grades
+      const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
+        method: "GET",
+      });
+      const gradesArray = Array.isArray(gradesResult.results)
+        ? gradesResult.results
+        : Array.isArray(gradesResult)
+        ? gradesResult
+        : [];
+      console.log("Fetched Grades:", gradesArray);
+      setGrades(gradesArray);
+    } catch (err) {
+      setGradesError(`Kurslarni yuklashda xatolik: ${err.message}`);
+      toast.error(`Kurslarni yuklashda xatolik: ${err.message}`);
+    } finally {
+      setGradesLoading(false);
     }
   }, []);
 
@@ -70,104 +141,149 @@ const AllUsers = () => {
     fetchUsers().finally(() => setTimeout(() => setIsRefreshing(false), 1000));
   }, [fetchUsers]);
 
-  const openAddModal = useCallback(() => {
-    setModalState((prev) => ({ ...prev, isAddOpen: true, newUsername: "", newPassword: "" }));
-  }, []);
-
-  const closeModal = useCallback(() => {
+  const openAddModal = () => {
     setModalState((prev) => ({
       ...prev,
-      isEditOpen: false,
-      isDeleteOpen: false,
-      isAddOpen: false,
-      selectedUser: null,
-      newUsername: "",
+      isAddOpen: true,
+      newName: "",
+      newSurname: "",
+      newUniversityId: "",
+      newEmail: "",
       newPassword: "",
-      isActionLoading: false,
+      newFaculty: "",
+      newGrade: "",
     }));
-  }, []);
+    fetchFacultiesAndGrades();
+  };
 
-  const handleAddUser = useCallback(async () => {
-    const { newUsername, newPassword } = modalState;
-    if (!newUsername || !newPassword) {
-      toast.error("Логин и пароль обязательны!");
-      return;
-    }
-    setModalState((prev) => ({ ...prev, isActionLoading: true }));
-    try {
-      await apiRequest("https://zaporka-backend.onrender.com/api/v1/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ username: newUsername, password: newPassword }),
-      });
-      toast.success("Пользователь успешно добавлен!");
-      await fetchUsers();
-      closeModal();
-    } catch (err) {
-      toast.error(`Ошибка добавления: ${err.message}`);
-    } finally {
-      setModalState((prev) => ({ ...prev, isActionLoading: false }));
-    }
-  }, [modalState, fetchUsers, closeModal]);
-
-  const openEditModal = useCallback((user) => {
-    if (!user?._id) return;
+  const openEditModal = (user) => {
     setModalState((prev) => ({
       ...prev,
       isEditOpen: true,
-      selectedUser: user,
-      newUsername: user.username || "",
+      editUserId: user.id,
+      newName: user.name || "",
+      newSurname: user.surname || "",
+      newUniversityId: user.university_id || "",
+      newEmail: "",
       newPassword: "",
+      newFaculty: "",
+      newGrade: "",
     }));
-  }, []);
+  };
 
-  const openDeleteModal = useCallback((user) => {
-    if (!user?._id) return;
-    setModalState((prev) => ({ ...prev, isDeleteOpen: true, selectedUser: user }));
-  }, []);
+  const closeModal = () => {
+    setModalState({
+      isAddOpen: false,
+      isEditOpen: false,
+      editUserId: null,
+      newName: "",
+      newSurname: "",
+      newUniversityId: "",
+      newEmail: "",
+      newPassword: "",
+      newFaculty: "",
+      newGrade: "",
+      isActionLoading: false,
+    });
+    setFaculties([]);
+    setGrades([]);
+    setFacultiesError(null);
+    setGradesError(null);
+  };
 
-  const handleEditUser = useCallback(async () => {
-    const { selectedUser, newUsername, newPassword } = modalState;
-    if (!selectedUser?._id) return;
+  const handleAddUser = async () => {
+    const { newName, newSurname, newUniversityId, newEmail, newPassword, newFaculty, newGrade } = modalState;
+
+    if (!newName || !newSurname || !newUniversityId || !newEmail || !newPassword || !newFaculty || !newGrade) {
+      toast.error("Barcha maydonlar to‘ldirilishi shart!");
+      return;
+    }
+
     setModalState((prev) => ({ ...prev, isActionLoading: true }));
+
     try {
-      await apiRequest(`https://zaporka-backend.onrender.com/api/v1/users/${selectedUser._id}`, {
+      await apiRequest("http://37.140.216.178/api/v1/admin/users/", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newName,
+          surname: newSurname,
+          university_id: newUniversityId,
+          email: newEmail,
+          password: newPassword,
+          faculty: Number(newFaculty),
+          grade: Number(newGrade),
+        }),
+      });
+      toast.success("Foydalanuvchi muvaffaqiyatli qo‘shildi!");
+      await fetchUsers();
+      closeModal();
+    } catch (err) {
+      console.error("Add user error:", err);
+      toast.error(`Qo‘shishda xatolik: ${err.message}`);
+    } finally {
+      setModalState((prev) => ({ ...prev, isActionLoading: false }));
+    }
+  };
+
+  const handleEditUser = async () => {
+    const { editUserId, newName, newSurname, newUniversityId, newEmail, newPassword, newFaculty } = modalState;
+
+    if (!newName || !newSurname || !newUniversityId || !newEmail || !newFaculty) {
+      toast.error("Barcha majburiy maydonlar to‘ldirilishi shart!");
+      return;
+    }
+
+    setModalState((prev) => ({ ...prev, isActionLoading: true }));
+
+    try {
+      const payload = {
+        name: newName,
+        surname: newSurname,
+        university_id: newUniversityId,
+        email: newEmail,
+        faculty: Number(newFaculty),
+      };
+      if (newPassword) payload.password = newPassword;
+
+      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${editUserId}/`, {
         method: "PUT",
-        body: JSON.stringify({ username: newUsername, password: newPassword || undefined }),
+        body: JSON.stringify(payload),
       });
-      toast.success("Пользователь успешно обновлен!");
+      toast.success("Foydalanuvchi muvaffaqiyatli tahrirlandi!");
       await fetchUsers();
       closeModal();
     } catch (err) {
-      toast.error(`Ошибка редактирования: ${err.message}`);
+      console.error("Edit user error:", err);
+      toast.error(`Tahrirlashda xatolik: ${err.message}`);
     } finally {
       setModalState((prev) => ({ ...prev, isActionLoading: false }));
     }
-  }, [modalState, fetchUsers, closeModal]);
+  };
 
-  const handleDeleteUser = useCallback(async () => {
-    const { selectedUser } = modalState;
-    if (!selectedUser?._id) return;
-    setModalState((prev) => ({ ...prev, isActionLoading: true }));
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Foydalanuvchini o‘chirishni tasdiqlaysizmi?")) return;
+
+    setLoading(true);
     try {
-      await apiRequest(`https://zaporka-backend.onrender.com/api/v1/users/${selectedUser._id}`, {
-        method: "DELETE",
-      });
-      toast.success("Пользователь успешно удален!");
+      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${id}/`, { method: "DELETE" });
+      toast.success("Foydalanuvchi muvaffaqiyatli o‘chirildi!");
       await fetchUsers();
-      closeModal();
     } catch (err) {
-      toast.error(`Ошибка удаления: ${err.message}`);
+      console.error("Delete user error:", err);
+      toast.error(`O‘chirishda xatolik: ${err.message}`);
     } finally {
-      setModalState((prev) => ({ ...prev, isActionLoading: false }));
+      setLoading(false);
     }
-  }, [modalState, fetchUsers, closeModal]);
+  };
 
   const filteredAndSortedUsers = useMemo(() => {
     let result = [...data];
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       result = result.filter((user) =>
-        [user._id, user.username?.toLowerCase()].some((field) => field?.toString().includes(lowerSearchTerm))
+        [user.id, user.university_id, user.name, user.surname]
+          .filter(Boolean)
+          .some((field) => field.toString().toLowerCase().includes(lowerSearchTerm))
       );
     }
     if (sortedBy) {
@@ -186,275 +302,353 @@ const AllUsers = () => {
     return filteredAndSortedUsers.slice(startIndex, endIndex);
   }, [filteredAndSortedUsers, currentPage, usersPerPage]);
 
+  const columns = useMemo(
+    () => [
+      {
+        key: "number",
+        label: "№",
+        sortable: false,
+        render: (_, __, index) => (currentPage - 1) * usersPerPage + index + 1,
+      },
+      {
+        key: "image",
+        label: "Profil",
+        sortable: false,
+        render: (value) => (
+          <div className="avatar">
+            <div className="w-10 h-10 rounded-full">
+              {value ? (
+                <img
+                  src={`http://37.140.216.178${value}`}
+                  alt="Profile"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <img
+                  src="https://www.iconpacks.net/icons/2/free-user-icon-3296-thumb.png"
+                  alt="Default Profile"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "name",
+        label: "Ism",
+        sortable: true,
+        render: (value) => value || "-",
+      },
+      {
+        key: "surname",
+        label: "Familiya",
+        sortable: true,
+        render: (value) => value || "-",
+      },
+      {
+        key: "id",
+        label: "ID",
+        sortable: true,
+        render: (value) => value || "-",
+      },
+      {
+        key: "university_id",
+        label: "Universitet ID",
+        sortable: true,
+        render: (value) => value || "-",
+      },
+      {
+        key: "inactive_tokens",
+        label: "Faol bo‘lmagan tokenlar",
+        sortable: false,
+        render: (value) => (value !== null && value !== undefined ? value.toString() : "-"),
+      },
+    ],
+    [currentPage, usersPerPage]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: "Tahrirlash",
+        icon: <FiEdit className="w-4 h-4" />,
+        onClick: (row) => openEditModal(row),
+        className: "btn btn-ghost btn-sm text-primary",
+      },
+      {
+        label: "O‘chirish",
+        icon: <FiTrash2 className="w-4 h-4" />,
+        onClick: (row) => handleDeleteUser(row.id),
+        className: "btn btn-ghost btn-sm text-error",
+      },
+    ],
+    []
+  );
+
   if (loading) return <Loading />;
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-base-100">
-        <p className="text-error text-lg mb-6 font-medium">Ошибка: {error}</p>
+      <motion.div
+        className="flex flex-col items-center justify-center min-h-screen bg-base-100"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <p className="text-error text-lg mb-6 font-medium">{error}</p>
         <motion.button
           className="btn btn-primary"
           onClick={fetchUsers}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Попробовать снова
+          Qayta urinish
         </motion.button>
-      </div>
+      </motion.div>
     );
   }
 
-  const columns = [
-    {
-      key: "number",
-      label: "№",
-      sortable: false,
-      render: (_, __, index) => (currentPage - 1) * usersPerPage + index + 1,
-    },
-    { key: "username", label: "Имя пользователя", sortable: true },
-  ];
-
-  const actions = [
-    {
-      icon: <FiEdit className="text-info" />,
-      onClick: (user) => openEditModal(user),
-      className: "btn btn-ghost btn-sm tooltip tooltip-info",
-    },
-    {
-      icon: <FiTrash2 className="text-error" />,
-      onClick: (user) => openDeleteModal(user),
-      className: "btn btn-ghost btn-sm tooltip tooltip-error",
-    },
-  ];
-
   return (
-    <div className="pr-8 py-5">
-      <div className="container mx-auto min-h-screen p-4 md:p-6 bg-base-100 rounded-xl shadow-xl">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
-        <h2 className="text-2xl md:text-3xl font-bold text-base-content flex items-center">
-          <FiUsers className="mr-2 text-primary" size={28} /> Все пользователи
-        </h2>
-      </motion.div>
-
-      <div className="card bg-base-200 p-4 mb-6 shadow-md">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="relative w-full md:w-1/3">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60" size={18} />
-            <input
-              type="text"
-              placeholder="Поиск"
-              className="input input-bordered w-full pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary transition-all duration-200"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <select
-              className="select select-bordered w-full md:w-auto focus:outline-none focus:ring-2 focus:ring-primary"
-              value={usersPerPage}
-              onChange={(e) => setUsersPerPage(Number(e.target.value))}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
+    <motion.div
+      className="p-6 bg-base-100 min-h-screen"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <motion.h1
+            className="text-3xl font-bold text-base-content"
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            Foydalanuvchilar
+          </motion.h1>
+          <div className="flex gap-3">
             <motion.button
-              className="btn btn-primary flex items-center gap-2"
+              className="btn btn-primary btn-sm flex items-center gap-2"
               onClick={openAddModal}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FiUserPlus size={16} /> Добавить
+              <FiUserPlus className="w-4 h-4" /> Qo‘shish
             </motion.button>
             <motion.button
-              className="btn btn-outline flex items-center gap-2"
+              className="btn btn-outline btn-sm flex items-center gap-2"
               onClick={handleRefresh}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              animate={isRefreshing ? { rotate: 360 } : {}}
-              transition={{ duration: 0.5 }}
             >
-              <FiRefreshCcw size={16} /> Обновить
+              <FiRefreshCcw className={isRefreshing ? "animate-spin w-4 h-4" : "w-4 h-4"} /> Yangilash
             </motion.button>
           </div>
         </div>
+
+        <motion.div
+          className="mb-6"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <div className="input-group w-full max-w-md">
+            <input
+              type="text"
+              placeholder="Ism, familiya, ID bo‘yicha qidirish..."
+              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <span className="btn btn-square btn-primary">
+              <FiSearch className="w-5 h-5" />
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="card bg-base-200 shadow-xl"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="card-body p-0">
+            <CustomTable
+              data={paginatedUsers}
+              columns={columns}
+              actions={actions}
+              emptyMessage="Foydalanuvchilar topilmadi"
+              onSort={setSortedBy}
+              className="table table-zebra w-full"
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mt-6 flex justify-center"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredAndSortedUsers.length / usersPerPage)}
+            onPageChange={setCurrentPage}
+            className="btn-group"
+          />
+        </motion.div>
       </div>
 
-      <div className=" bg-base-200 shadow-md">
-        <CustomTable
-          data={paginatedUsers}
-          columns={columns}
-          actions={actions}
-          emptyMessage="Пользователи не найдены"
-          onSort={setSortedBy}
-          className="w-full"
-        />
-      </div>
-
-      <div className="mt-6 flex justify-center">
-        <CustomPagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(filteredAndSortedUsers.length / usersPerPage)}
-          onPageChange={setCurrentPage}
-        />
-      </div>
-
-      {/* Add User Modal */}
-      {modalState.isAddOpen && (
-        <div className="modal modal-open">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="modal-box w-11/12 max-w-md bg-base-100 shadow-xl"
-          >
-            <h3 className="font-bold text-xl mb-4">Добавить пользователя</h3>
+      {(modalState.isAddOpen || modalState.isEditOpen) && (
+        <motion.div
+          className="modal modal-open"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="modal-box bg-base-200 shadow-xl max-w-lg">
+            <motion.h3
+              className="font-bold text-lg text-base-content mb-4"
+              initial={{ y: -10 }}
+              animate={{ y: 0 }}
+            >
+              {modalState.isAddOpen ? "Yangi foydalanuvchi qo‘shish" : "Foydalanuvchini tahrirlash"}
+            </motion.h3>
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Имя пользователя</span>
+                  <span className="label-text">Ism</span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                  value={modalState.newUsername}
-                  onChange={(e) => setModalState((prev) => ({ ...prev, newUsername: e.target.value }))}
-                  disabled={modalState.isActionLoading}
+                  placeholder="Ism kiriting"
+                  className="input input-bordered w-full"
+                  value={modalState.newName}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newName: e.target.value }))}
                 />
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Пароль</span>
-                </label>
-                <input
-                  type="password"
-                  className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                  value={modalState.newPassword}
-                  onChange={(e) => setModalState((prev) => ({ ...prev, newPassword: e.target.value } ))}
-                  disabled={modalState.isActionLoading}
-                />
-              </div>
-            </div>
-            <div className="modal-action mt-6 flex justify-end gap-3">
-              <motion.button
-                className="btn btn-primary"
-                onClick={handleAddUser}
-                disabled={modalState.isActionLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {modalState.isActionLoading ? <span className="loading loading-spinner" /> : "Добавить"}
-              </motion.button>
-              <motion.button
-                className="btn btn-ghost"
-                onClick={closeModal}
-                disabled={modalState.isActionLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Отмена
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {modalState.isEditOpen && modalState.selectedUser && (
-        <div className="modal modal-open">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="modal-box w-11/12 max-w-md bg-base-100 shadow-xl"
-          >
-            <h3 className="font-bold text-xl mb-4">Изменить пользователя</h3>
-            <div className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-medium">Новое имя пользователя</span>
+                  <span className="label-text">Familiya</span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                  value={modalState.newUsername}
-                  onChange={(e) => setModalState((prev) => ({ ...prev, newUsername: e.target.value }))}
-                  disabled={modalState.isActionLoading}
+                  placeholder="Familiya kiriting"
+                  className="input input-bordered w-full"
+                  value={modalState.newSurname}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newSurname: e.target.value }))}
                 />
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Новый пароль (опционально)</span>
+                  <span className="label-text">Universitet ID</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Universitet ID kiriting"
+                  className="input input-bordered w-full"
+                  value={modalState.newUniversityId}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newUniversityId: e.target.value }))}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Email</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="Email kiriting"
+                  className="input input-bordered w-full"
+                  value={modalState.newEmail}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newEmail: e.target.value }))}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Parol {modalState.isEditOpen && "(ixtiyoriy)"}</span>
                 </label>
                 <input
                   type="password"
-                  className="input input-bordered w-full focus:ring-2 focus:ring-primary"
+                  placeholder={modalState.isEditOpen ? "Yangi parol (ixtiyoriy)" : "Parol kiriting"}
+                  className="input input-bordered w-full"
                   value={modalState.newPassword}
                   onChange={(e) => setModalState((prev) => ({ ...prev, newPassword: e.target.value }))}
-                  disabled={modalState.isActionLoading}
                 />
               </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Fakultet</span>
+                </label>
+                {modalState.isAddOpen ? (
+                  <select
+                    className="select select-bordered w-full"
+                    value={modalState.newFaculty}
+                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
+                    disabled={facultiesLoading || !!facultiesError}
+                  >
+                    <option value="">Fakultetni tanlang</option>
+                    {faculties.map((faculty) => (
+                      <option key={faculty.id} value={faculty.id}>
+                        {faculty.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    placeholder="Fakultet raqami kiriting"
+                    className="input input-bordered w-full"
+                    value={modalState.newFaculty}
+                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
+                  />
+                )}
+                {facultiesError && modalState.isAddOpen && (
+                  <span className="text-error text-sm mt-1">{facultiesError}</span>
+                )}
+              </div>
+              {modalState.isAddOpen && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Kurs</span>
+                  </label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={modalState.newGrade}
+                    onChange={(e) => setModalState((prev) => ({ ...prev, newGrade: e.target.value }))}
+                    disabled={gradesLoading || !!gradesError}
+                  >
+                    <option value="">Kursni tanlang</option>
+                    {grades.map((grade) => (
+                      <option key={grade.id} value={grade.id}>
+                        {grade.name}
+                      </option>
+                    ))}
+                  </select>
+                  {gradesError && <span className="text-error text-sm mt-1">{gradesError}</span>}
+                </div>
+              )}
             </div>
             <div className="modal-action mt-6 flex justify-end gap-3">
               <motion.button
-                className="btn btn-primary"
-                onClick={handleEditUser}
-                disabled={modalState.isActionLoading}
+                className="btn btn-primary btn-sm"
+                onClick={modalState.isAddOpen ? handleAddUser : handleEditUser}
+                disabled={modalState.isActionLoading || facultiesLoading || gradesLoading || !!facultiesError || !!gradesError}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {modalState.isActionLoading ? <span className="loading loading-spinner" /> : "Сохранить"}
+                {modalState.isActionLoading ? "Yuklanmoqda..." : modalState.isAddOpen ? "Qo‘shish" : "Saqlash"}
               </motion.button>
               <motion.button
-                className="btn btn-ghost"
+                className="btn btn-outline btn-sm"
                 onClick={closeModal}
-                disabled={modalState.isActionLoading}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Отмена
+                Bekor qilish
               </motion.button>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       )}
-
-      {/* Delete User Modal */}
-      {modalState.isDeleteOpen && modalState.selectedUser && (
-        <div className="modal modal-open">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="modal-box w-11/12 max-w-sm bg-base-100 shadow-xl"
-          >
-            <h3 className="font-bold text-xl mb-4">Удаление пользователя</h3>
-            <p className="py-2 text-base-content/80">Вы действительно хотите удалить пользователя <span className="font-medium">{modalState.selectedUser.username}</span>?</p>
-            <div className="modal-action mt-6 flex justify-end gap-3">
-              <motion.button
-                className="btn btn-error"
-                onClick={handleDeleteUser}
-                disabled={modalState.isActionLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {modalState.isActionLoading ? <span className="loading loading-spinner" /> : "Удалить"}
-              </motion.button>
-              <motion.button
-                className="btn btn-ghost"
-                onClick={closeModal}
-                disabled={modalState.isActionLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Отмена
-              </motion.button>
-            </div>
-          </motion.div>
-        </div> 
-      )}
-    </div>
-    </div>
+    </motion.div>
   );
 };
 

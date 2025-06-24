@@ -28,9 +28,10 @@ const Login = () => {
         },
         body: JSON.stringify({ login: username, password }),
       });
-  
+      console.log("Response status:", response.status, response.statusText);
       const data = await response.json();
-  
+      console.log("Response data:", data);
+      
       if (response.ok && data?.access_token) {
         const userData = {
           id: data.id || null,
