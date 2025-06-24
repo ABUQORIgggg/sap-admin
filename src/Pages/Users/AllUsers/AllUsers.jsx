@@ -499,15 +499,15 @@ const AllUsers = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <div className="input-group w-full max-w-md">
+          <div className="input-group w-full max-w-md flex">
             <input
               type="text"
               placeholder="Ism, familiya, ID bo‘yicha qidirish..."
-              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-l-xl border border-gray-300 px-4 py-2 w-[400px] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="btn btn-primary">
+            <span className="bg-black text-white px-4 py-2 rounded-r-xl hover:bg-gray-800 transition-all duration-200">
               <FiSearch className="w-5 h-5" />
             </span>
           </div>
