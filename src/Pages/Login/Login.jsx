@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { login } from "../../store/slices/AuthSlice";
 import { motion } from "framer-motion";
 import loginImage from "../../images/login-image.avif";
+import PrivateRoute from '../../hooks/PrivateRoute'
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -93,6 +94,7 @@ const Login = () => {
   };
 
   return (
+    
     <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
       <ToastContainer position="top-right" autoClose={3000} />
       <motion.div

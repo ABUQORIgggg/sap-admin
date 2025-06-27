@@ -481,7 +481,7 @@ const AllUsers = () => {
             animate={{ y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            Foydalanuvchilar
+           Users
           </motion.h1>
           <div className="flex gap-3">
             <motion.button
@@ -490,7 +490,7 @@ const AllUsers = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FiUserPlus className="w-4 h-4" /> Qo‘shish
+              <FiUserPlus className="w-4 h-4" /> Add users
             </motion.button>
             <motion.button
               className="btn btn-outline btn-sm flex items-center gap-2"
@@ -540,6 +540,8 @@ const AllUsers = () => {
             />
           </div>
         </motion.div>
+
+
 
         <motion.div
           className="mt-6 flex justify-center"
