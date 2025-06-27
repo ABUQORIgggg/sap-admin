@@ -213,7 +213,7 @@ const AllUsers = () => {
       newSurname: user.surname || "",
       newUniversityId: user.university_id || "",
       newEmail: user.email || "",
-      newPassword: "", // Password not pre-filled for security
+      newPassword: "",
       newFaculty: user.faculty || "",
       newGrade: "",
     }));
@@ -314,12 +314,22 @@ const AllUsers = () => {
 
     setLoading(true);
     try {
-      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${id}/`, { method: "DELETE" });
+      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${id}/`, {
+        method: "DELETE",
+      });
       toast.success("Foydalanuvchi muvaffaqiyatli o‘chirildi!");
       await fetchUsers();
     } catch (err) {
       console.error("Delete user error:", err);
-      toast.error(`O‘chirishda xatolik: ${err.message}`);
+      let errorMessage = `O‘chirishda xatolik: ${err.message}`;
+      if (err.message.includes("404")) {
+        errorMessage = "Foydalanuvchi topilmadi. Iltimos, ID ni tekshiring.";
+      } else if (err.message.includes("401")) {
+        errorMessage = "Avtorizatsiya xatosi. Tokenni tekshiring.";
+      } else if (err.message.includes("403")) {
+        errorMessage = "Ruxsat yo‘q. O‘chirish uchun yetarli huquqlar mavjud emas.";
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -428,7 +438,7 @@ const AllUsers = () => {
       {
         label: "O‘chirish",
         icon: <FiTrash2 className="w-4 h-4" />,
-        onChange: (row) => handleDeleteUser(row.id),
+        onClick: (row) => handleDeleteUser(row.id),
         className: "btn btn-ghost btn-sm text-error",
       },
     ],
@@ -499,17 +509,17 @@ const AllUsers = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <div className="input-group w-full max-w-md">
+          <div className="flex items-center w-full max-w-md">
             <input
               type="text"
               placeholder="Ism, familiya, ID bo‘yicha qidirish..."
-              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary rounded-r-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="btn btn-primary">
+            <button className="btn btn-primary rounded-l-none">
               <FiSearch className="w-5 h-5" />
-            </span>
+            </button>
           </div>
         </motion.div>
 
@@ -615,7 +625,7 @@ const AllUsers = () => {
                   <span className="label-text">Parol {modalState.isEditOpen && "(ixtiyoriy)"}</span>
                 </label>
                 <input
-                  type={modalState.isEditOpen ? "text" : "password"} // Show password in edit mode
+                  type={modalState.isEditOpen ? "text" : "password"}
                   placeholder={modalState.isEditOpen ? "Yangi parol (ixtiyoriy)" : "Parol kiriting"}
                   className="input input-bordered w-full"
                   value={modalState.newPassword}

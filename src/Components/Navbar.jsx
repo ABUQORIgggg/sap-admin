@@ -63,7 +63,7 @@ const Navbar = () => {
           icon={<AiOutlineMenu />}
         />
         <div className="flex">
-          <NavButton title="Notification" dotColor="rgb(254, 201, 15)" icon={<RiNotification3Line />} />
+          {/* <NavButton title="Notification" dotColor="rgb(254, 201, 15)" icon={<RiNotification3Line />} /> */}
 
           <TooltipComponent content="Profile" position="BottomCenter">
             <div
@@ -73,7 +73,7 @@ const Navbar = () => {
               <img className="rounded-full w-12" src={avatar} alt="user-profile" />
               <p>
                 <span className="text-base-content text-14">Hi,</span>
-                <span className="text-base-content font-bold ml-1 text-14">{username}</span>
+                <span className="text-primary font-bold ml-1 text-14">{username}</span>
               </p>
               <MdKeyboardArrowDown className="text-base-content text-14" />
             </div>

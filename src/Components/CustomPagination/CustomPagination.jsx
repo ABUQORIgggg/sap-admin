@@ -35,7 +35,7 @@ const CustomPagination = ({ currentPage, totalPages, onPageChange }) => {
     <div className="flex justify-center mt-4 p-2 bg-base-200 rounded-lg">
       <button
         onClick={() => handlePageChange(currentPage - 1)}
-        className="px-4 py-2 mx-1 bg-neutral text-neutral-content rounded-md disabled:opacity-50 flex items-center"
+        className="px-4 py-2 mx-1 bg-primary rounded-md text-white flex items-center"
         disabled={currentPage === 1}
         aria-label="Previous page"
       >
@@ -63,7 +63,7 @@ const CustomPagination = ({ currentPage, totalPages, onPageChange }) => {
 
       <button
         onClick={() => handlePageChange(currentPage + 1)}
-        className="px-4 py-2 mx-1 bg-neutral text-neutral-content rounded-md disabled:opacity-50 flex items-center"
+        className="px-4 py-2 mx-1 bg-primary text-neatural rounded-md text-white flex items-center"
         disabled={currentPage === totalPages}
         aria-label="Next page"
       >
