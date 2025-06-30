@@ -67,7 +67,7 @@ const AllUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = "http://37.140.216.178/api/v1/admin/userlist/";
+      const endpoint = "https://api.univibe.uz/api/v1/admin/userlist/";
       const result = await apiRequest(endpoint, { method: "GET" });
       console.log("API Response:", result);
       const dataArray = Array.isArray(result.results) ? result.results : [];
@@ -94,7 +94,7 @@ const AllUsers = () => {
     setGradesError(null);
 
     try {
-      const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
+      const facultiesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/faculties/", {
         method: "GET",
       });
       const facultiesArray = Array.isArray(facultiesResult.results)
@@ -112,7 +112,7 @@ const AllUsers = () => {
     }
 
     try {
-      const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
+      const gradesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/grades/", {
         method: "GET",
       });
       const gradesArray = Array.isArray(gradesResult.results)
@@ -139,7 +139,7 @@ const AllUsers = () => {
       setFacultiesLoading(true);
       setFacultiesError(null);
       try {
-        const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
+        const facultiesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/faculties/", {
           method: "GET",
         });
         const facultiesArray = Array.isArray(facultiesResult.results)
@@ -164,7 +164,7 @@ const AllUsers = () => {
       setGradesLoading(true);
       setGradesError(null);
       try {
-        const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
+        const gradesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/grades/", {
           method: "GET",
         });
         const gradesArray = Array.isArray(gradesResult.results)
@@ -251,7 +251,7 @@ const AllUsers = () => {
     setModalState((prev) => ({ ...prev, isActionLoading: true }));
 
     try {
-      await apiRequest("http://37.140.216.178/api/v1/admin/users/", {
+      await apiRequest("https://api.univibe.uz/api/v1/admin/users/", {
         method: "POST",
         body: JSON.stringify({
           name: newName,
@@ -294,7 +294,7 @@ const AllUsers = () => {
       };
       if (newPassword) payload.password = newPassword;
 
-      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${editUserId}/`, {
+      await apiRequest(`https://api.univibe.uz/api/v1/admin/users/${editUserId}/`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
@@ -314,7 +314,7 @@ const AllUsers = () => {
 
     setLoading(true);
     try {
-      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${id}/`, {
+      await apiRequest(`https://api.univibe.uz/api/v1/admin/users/${id}/`, {
         method: "DELETE",
       });
       toast.success("Foydalanuvchi muvaffaqiyatli o‘chirildi!");
@@ -378,7 +378,7 @@ const AllUsers = () => {
             <div className="w-10 h-10 rounded-full">
               {value ? (
                 <img
-                  src={`http://37.140.216.178${value}`}
+                  src={`https://api.univibe.uz/api/v1${value}`}
                   alt="Profile"
                   className="w-full h-full object-cover rounded-full"
                 />

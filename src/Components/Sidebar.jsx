@@ -130,10 +130,11 @@ const Sidebar = () => {
 
 
               <div className=" flex items-center m-auto">
-                <img className="w-14 flex items-start"
+                {/* <img className="w-14 flex items-start"
                   src={currentMode === "Dark" ? "/images/logodark.png" : "/images/logo.png"}
-                  alt="zaporka"
-                />
+                  alt="xz"
+                /> */}
+                <img className="w-14 bg-black flex items-start" src="images/logodark.png" alt="" />
                 <p className="text-2xl text-base-900">Univibe</p>
               </div>
 
