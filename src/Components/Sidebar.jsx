@@ -134,7 +134,7 @@ const Sidebar = () => {
                   src={currentMode === "Dark" ? "/images/logodark.png" : "/images/logo.png"}
                   alt="xz"
                 /> */}
-                <img className="w-14 bg-black flex items-start" src="images/logodark.png" alt="" />
+                <img className="w-14 flex items-start" src="images/logodark.png" alt="" />
                 <p className="text-2xl text-base-900">Univibe</p>
               </div>
 
