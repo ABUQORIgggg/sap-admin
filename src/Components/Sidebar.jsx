@@ -21,7 +21,7 @@ const Sidebar = () => {
       title: "Административная Панель",
       links: [
         {
-          name: "Панель",
+          name: "Dashboard",
           route: "", // English route path
           icon: <FiShoppingBag />,
         },
@@ -121,18 +121,25 @@ const Sidebar = () => {
     <div className="ml-3 h-screen overflow-auto md:overflow-auto pb-10 bg-base-100">
       {activeMenu && (
         <>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-center ">
             <Link
               to="/"
               onClick={handleCloseSidebar}
-              className="items-center gap-3 ml-3 mt-4 flex text-xl font-extrabold tracking-tight text-base-content"
+              className="items-center gap-3 ml-3 mt-3 flex text-xl font-extrabold tracking-tight text-base-content"
             >
-              <div className="max-w-[60%] bg-slate-400">
-                <img
+
+
+              <div className=" flex items-center m-auto">
+                {/* <img className="w-14 flex items-start"
                   src={currentMode === "Dark" ? "/images/logodark.png" : "/images/logo.png"}
-                  alt="zaporka"
-                />
+                  alt="xz"
+                /> */}
+                <img className="w-14 flex items-start" src="images/logodark.png" alt="" />
+                <p className="text-2xl text-base-900">Univibe</p>
               </div>
+
+
+
             </Link>
             <TooltipComponent content="Menu" position="BottomCenter">
               <button

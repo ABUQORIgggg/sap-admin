@@ -15,37 +15,32 @@ import AllUsers from "./Pages/Users/AllUsers/AllUsers";
 import Customers from "./Pages/Users/Customers/Customers";
 import Workers from "./Pages/Users/Workers/Workers";
 import Login from "./Pages/Login/Login";
-import ProtectedRoute from "./hooks/PrivateRoute";
+import ProtectedRoute from "../src/hooks/PrivateRoute";
 import Inventory from "./Pages/Inventory/Inventory";
 import AddInvoice from "./Pages/Inventory/AddInvoice";
 import CreateCategory from "./Pages/Categories/CreateCategory/CreateCategory";
 import CategoryDashboard from "./Pages/Categories/CategoryDashboard/CategoryDashboard";
 
-// Define your routes
 const router = createBrowserRouter([
   {
     path: "/",
     element: (
+      <ProtectedRoute>
         <App />
+      </ProtectedRoute>
     ),
     children: [
       {
         path: "/",
-        element: (
-            <Dashboard />
-        ),
+        element: <Dashboard />,
       },
       {
         path: "orders",
-        element: (
-            <Orders />
-        ),
+        element: <Orders />,
       },
       {
         path: "create-products",
-        element: (
-            <CreateProduct />
-        ),
+        element: <CreateProduct />,
       },
       {
         path: "edit-products",
@@ -65,9 +60,7 @@ const router = createBrowserRouter([
       },
       {
         path: "all-users",
-        element: (
-            <AllUsers />
-        ),
+        element: <AllUsers />,
       },
       {
         path: "customers",

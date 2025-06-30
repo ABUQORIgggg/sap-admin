@@ -6,9 +6,8 @@ import { useStateContext } from "../Contexts/ContextProvider";
 const ThemeSettings = () => {
   const { setThemeSettings, currentMode, setMode } = useStateContext();
 
-  // Updated to pass the theme string directly to setMode
   const handleThemeChange = (theme) => {
-    setMode(theme); // Pass the theme string directly
+    setMode(theme); 
   };
 
   return (

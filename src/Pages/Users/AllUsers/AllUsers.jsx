@@ -67,7 +67,7 @@ const AllUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = "http://37.140.216.178/api/v1/admin/userlist/";
+      const endpoint = "https://api.univibe.uz/api/v1/admin/userlist/";
       const result = await apiRequest(endpoint, { method: "GET" });
       console.log("API Response:", result);
       const dataArray = Array.isArray(result.results) ? result.results : [];
@@ -94,8 +94,7 @@ const AllUsers = () => {
     setGradesError(null);
 
     try {
-      // Fetch faculties
-      const facultiesResult = await apiRequest("http://37.140.216.178/api/v1/admin/faculties/", {
+      const facultiesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/faculties/", {
         method: "GET",
       });
       const facultiesArray = Array.isArray(facultiesResult.results)
@@ -113,8 +112,7 @@ const AllUsers = () => {
     }
 
     try {
-      // Fetch grades
-      const gradesResult = await apiRequest("http://37.140.216.178/api/v1/admin/grades/", {
+      const gradesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/grades/", {
         method: "GET",
       });
       const gradesArray = Array.isArray(gradesResult.results)
@@ -135,6 +133,56 @@ const AllUsers = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      setFacultiesLoading(true);
+      setFacultiesError(null);
+      try {
+        const facultiesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/faculties/", {
+          method: "GET",
+        });
+        const facultiesArray = Array.isArray(facultiesResult.results)
+          ? facultiesResult.results
+          : Array.isArray(facultiesResult)
+          ? facultiesResult
+          : [];
+        console.log("Fetched Faculties:", facultiesArray);
+        setFaculties(facultiesArray);
+      } catch (err) {
+        setFacultiesError(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+        toast.error(`Fakultetlarni yuklashda xatolik: ${err.message}`);
+      } finally {
+        setFacultiesLoading(false);
+      }
+    };
+    fetchFaculties();
+  }, []);
+
+  useEffect(() => {
+    const fetchGrades = async () => {
+      setGradesLoading(true);
+      setGradesError(null);
+      try {
+        const gradesResult = await apiRequest("https://api.univibe.uz/api/v1/admin/grades/", {
+          method: "GET",
+        });
+        const gradesArray = Array.isArray(gradesResult.results)
+          ? gradesResult.results
+          : Array.isArray(gradesResult)
+          ? gradesResult
+          : [];
+        console.log("Fetched Grades:", gradesArray);
+        setGrades(gradesArray);
+      } catch (err) {
+        setGradesError(`Kurslarni yuklashda xatolik: ${err.message}`);
+        toast.error(`Kurslarni yuklashda xatolik: ${err.message}`);
+      } finally {
+        setGradesLoading(false);
+      }
+    };
+    fetchGrades();
+  }, []);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -164,11 +212,12 @@ const AllUsers = () => {
       newName: user.name || "",
       newSurname: user.surname || "",
       newUniversityId: user.university_id || "",
-      newEmail: "",
+      newEmail: user.email || "",
       newPassword: "",
-      newFaculty: "",
+      newFaculty: user.faculty || "",
       newGrade: "",
     }));
+    fetchFacultiesAndGrades();
   };
 
   const closeModal = () => {
@@ -202,7 +251,7 @@ const AllUsers = () => {
     setModalState((prev) => ({ ...prev, isActionLoading: true }));
 
     try {
-      await apiRequest("http://37.140.216.178/api/v1/admin/users/", {
+      await apiRequest("https://api.univibe.uz/api/v1/admin/users/", {
         method: "POST",
         body: JSON.stringify({
           name: newName,
@@ -245,7 +294,7 @@ const AllUsers = () => {
       };
       if (newPassword) payload.password = newPassword;
 
-      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${editUserId}/`, {
+      await apiRequest(`https://api.univibe.uz/api/v1/admin/users/${editUserId}/`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
@@ -265,12 +314,22 @@ const AllUsers = () => {
 
     setLoading(true);
     try {
-      await apiRequest(`http://37.140.216.178/api/v1/admin/users/${id}/`, { method: "DELETE" });
+      await apiRequest(`https://api.univibe.uz/api/v1/admin/users/${id}/`, {
+        method: "DELETE",
+      });
       toast.success("Foydalanuvchi muvaffaqiyatli o‘chirildi!");
       await fetchUsers();
     } catch (err) {
       console.error("Delete user error:", err);
-      toast.error(`O‘chirishda xatolik: ${err.message}`);
+      let errorMessage = `O‘chirishda xatolik: ${err.message}`;
+      if (err.message.includes("404")) {
+        errorMessage = "Foydalanuvchi topilmadi. Iltimos, ID ni tekshiring.";
+      } else if (err.message.includes("401")) {
+        errorMessage = "Avtorizatsiya xatosi. Tokenni tekshiring.";
+      } else if (err.message.includes("403")) {
+        errorMessage = "Ruxsat yo‘q. O‘chirish uchun yetarli huquqlar mavjud emas.";
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -319,7 +378,7 @@ const AllUsers = () => {
             <div className="w-10 h-10 rounded-full">
               {value ? (
                 <img
-                  src={`http://37.140.216.178${value}`}
+                  src={`https://api.univibe.uz/api/v1${value}`}
                   alt="Profile"
                   className="w-full h-full object-cover rounded-full"
                 />
@@ -422,7 +481,7 @@ const AllUsers = () => {
             animate={{ y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            Foydalanuvchilar
+           Users
           </motion.h1>
           <div className="flex gap-3">
             <motion.button
@@ -431,7 +490,7 @@ const AllUsers = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FiUserPlus className="w-4 h-4" /> Qo‘shish
+              <FiUserPlus className="w-4 h-4" /> Add users
             </motion.button>
             <motion.button
               className="btn btn-outline btn-sm flex items-center gap-2"
@@ -450,17 +509,17 @@ const AllUsers = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <div className="input-group w-full max-w-md">
+          <div className="flex items-center w-full max-w-md">
             <input
               type="text"
               placeholder="Ism, familiya, ID bo‘yicha qidirish..."
-              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-primary rounded-r-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="btn btn-square btn-primary">
+            <button className="btn btn-primary rounded-l-none">
               <FiSearch className="w-5 h-5" />
-            </span>
+            </button>
           </div>
         </motion.div>
 
@@ -481,6 +540,8 @@ const AllUsers = () => {
             />
           </div>
         </motion.div>
+
+
 
         <motion.div
           className="mt-6 flex justify-center"
@@ -566,7 +627,7 @@ const AllUsers = () => {
                   <span className="label-text">Parol {modalState.isEditOpen && "(ixtiyoriy)"}</span>
                 </label>
                 <input
-                  type="password"
+                  type={modalState.isEditOpen ? "text" : "password"}
                   placeholder={modalState.isEditOpen ? "Yangi parol (ixtiyoriy)" : "Parol kiriting"}
                   className="input input-bordered w-full"
                   value={modalState.newPassword}
@@ -577,30 +638,20 @@ const AllUsers = () => {
                 <label className="label">
                   <span className="label-text">Fakultet</span>
                 </label>
-                {modalState.isAddOpen ? (
-                  <select
-                    className="select select-bordered w-full"
-                    value={modalState.newFaculty}
-                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
-                    disabled={facultiesLoading || !!facultiesError}
-                  >
-                    <option value="">Fakultetni tanlang</option>
-                    {faculties.map((faculty) => (
-                      <option key={faculty.id} value={faculty.id}>
-                        {faculty.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="number"
-                    placeholder="Fakultet raqami kiriting"
-                    className="input input-bordered w-full"
-                    value={modalState.newFaculty}
-                    onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
-                  />
-                )}
-                {facultiesError && modalState.isAddOpen && (
+                <select
+                  className="select select-bordered w-full"
+                  value={modalState.newFaculty}
+                  onChange={(e) => setModalState((prev) => ({ ...prev, newFaculty: e.target.value }))}
+                  disabled={facultiesLoading || !!facultiesError}
+                >
+                  <option value="">Fakultetni tanlang</option>
+                  {faculties.map((faculty) => (
+                    <option key={faculty.id} value={faculty.id}>
+                      {faculty.faculty_name}
+                    </option>
+                  ))}
+                </select>
+                {facultiesError && (modalState.isAddOpen || modalState.isEditOpen) && (
                   <span className="text-error text-sm mt-1">{facultiesError}</span>
                 )}
               </div>
@@ -618,7 +669,7 @@ const AllUsers = () => {
                     <option value="">Kursni tanlang</option>
                     {grades.map((grade) => (
                       <option key={grade.id} value={grade.id}>
-                        {grade.name}
+                        {grade.grade_name}
                       </option>
                     ))}
                   </select>

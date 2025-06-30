@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, Navigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { login } from "../../store/slices/AuthSlice";
@@ -10,17 +10,23 @@ import loginImage from "../../images/login-image.avif";
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+ 
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     toast.info("Попытка входа...");
-  
+
     try {
-      const response = await fetch("http://37.140.216.178/api/v1/admin/login/", {
+      const response = await fetch("https://api.univibe.uz/api/v1/admin/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,39 +34,45 @@ const Login = () => {
         },
         body: JSON.stringify({ login: username, password }),
       });
-      console.log("Response status:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData?.message || `Ошибка: ${response.statusText}`;
+        toast.error(errorMsg);
+        console.error("Login failed:", errorMsg);
+        return;
+      }
+
       const data = await response.json();
       console.log("Response data:", data);
-      
-      if (response.ok && data?.access_token) {
+
+      if (data?.access_token) {
         const userData = {
           id: data.id || null,
           username: username,
           token: data.access_token,
           refresh: data.refresh_token,
         };
-  
+
         dispatch(login(userData));
-  
+
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("refresh_token", data.refresh_token);
         localStorage.setItem("username", username);
-  
+
         toast.success("Вход выполнен успешно!");
-        navigate("/all-users", { replace: true });
+        navigate("/", { replace: true }); // Immediate redirect to Dashboard
       } else {
-        const errorMsg = data?.message || "Неверные данные для входа.";
-        toast.error(errorMsg);
-        console.log("Login error response:", data);
+        toast.error("Неверные данные для входа.");
+        console.error("No access token in response:", data);
       }
     } catch (err) {
       console.error("Login error:", err);
-      toast.error("Ошибка при подключении к серверу.");
+      toast.error("Ошибка при подключении к серверу. Проверьте интернет-соединение.");
     } finally {
       setLoading(false);
     }
   };
-  
 
   const containerVariants = {
     hidden: { opacity: 0 },
