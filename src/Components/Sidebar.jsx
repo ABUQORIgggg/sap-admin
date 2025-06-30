@@ -125,7 +125,7 @@ const Sidebar = () => {
             <Link
               to="/"
               onClick={handleCloseSidebar}
-              className="items-center gap-3 ml-3 mt-4 flex text-xl font-extrabold tracking-tight text-base-content"
+              className="items-center gap-3 ml-3 mt-3 flex text-xl font-extrabold tracking-tight text-base-content"
             >
 
 
