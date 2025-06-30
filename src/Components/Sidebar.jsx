@@ -127,7 +127,7 @@ const Sidebar = () => {
               onClick={handleCloseSidebar}
               className="items-center gap-3 ml-3 mt-4 flex text-xl font-extrabold tracking-tight text-base-content"
             >
-              <div className="max-w-[60%]">
+              <div className="max-w-[60%] bg-slate-400">
                 <img
                   src={currentMode === "Dark" ? "/images/logodark.png" : "/images/logo.png"}
                   alt="zaporka"
